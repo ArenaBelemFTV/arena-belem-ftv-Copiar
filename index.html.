@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arena Belém FTV</title>
+<style>
+:root{--bg:#0d0d0f;--panel:#171719;--panel2:#202023;--gold:#d4af37;--gold2:#f0d778;--text:#f5f2e8;--muted:#aaa59a;--line:#34312a;--green:#2c9b68;--red:#d45b52;--amber:#c9952c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:10px;padding:10px 14px;font-weight:650}
+.app{max-width:1180px;margin:auto;padding:22px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:13px}
+.ball{width:48px;height:48px;border:2px solid var(--gold);border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:24px}
+.brand h1{margin:0;color:var(--gold);font-size:20px;letter-spacing:1.3px}
+.brand small{color:var(--muted);letter-spacing:2px}
+.status{color:var(--gold2);border:1px solid #695626;padding:7px 10px;border-radius:30px;font-size:12px}
+.hero{background:linear-gradient(120deg,#1d1b17,#121214);border:1px solid #4d4020;border-radius:18px;padding:22px;margin-bottom:18px}
+.hero h2{margin:0 0 5px;color:var(--gold2);font-size:25px}
+.hero p{margin:0;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:16px}
+.stat b{display:block;font-size:26px;color:var(--gold2)}
+.stat span{color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.tabs button{background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.tabs button.active,.primary{background:var(--gold);color:#17130a}
+.layout{display:grid;grid-template-columns:1fr 1.5fr;gap:14px}
+.card h3{margin:0 0 14px;color:var(--gold2)}
+label{display:block;color:var(--muted);font-size:13px;margin:10px 0 5px}
+input,select{width:100%;background:#101012;color:var(--text);border:1px solid #45413a;border-radius:9px;padding:11px}
+input:focus,select:focus{outline:1px solid var(--gold)}
+.formrow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.goldbtn{background:var(--gold);color:#15120a;width:100%;margin-top:13px}
+.secondary{background:#292821;color:var(--gold2);border:1px solid #5a4b25}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.toolbar select{width:auto;min-width:140px}
+.student{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.student:last-child{border:0}
+.avatar{width:36px;height:36px;border-radius:50%;background:#332b18;color:var(--gold2);display:grid;place-items:center;font-weight:700}
+.student .meta{flex:1}
+.student strong{display:block}
+.student small{color:var(--muted)}
+.actions{display:flex;gap:5px;flex-wrap:wrap}
+.actions button{padding:7px 9px;font-size:12px;background:#292929;color:#ddd;border:1px solid #454545}
+.actions .present{border-color:#286c4d;color:#8ee0b4}
+.actions .absent{border-color:#75403b;color:#ff9d94}
+.actions .just{border-color:#806323;color:#f3d27a}
+.actions button.chosen{background:var(--gold);color:#17130a;border-color:var(--gold)}
+.empty{color:var(--muted);padding:18px 0}
+.hidden{display:none}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{text-align:left;padding:10px;border-bottom:1px solid var(--line);font-size:13px}
+.table th{color:var(--gold2)}
+.pill{padding:4px 8px;border-radius:20px;font-size:11px}
+.pill.Presente{background:#173d2b;color:#9de1b8}
+.pill.Falta{background:#48211f;color:#ffaaa2}
+.pill.Justificada{background:#443718;color:#f3d27a}
+.pill.Pendente{background:#333;color:#ccc}
+.note{font-size:12px;color:var(--muted);margin-top:14px}
+.footer{margin:24px 0 5px;text-align:center;color:#777;font-size:12px}
+@media(max-width:760px){
+.app{padding:14px}
+.stats{grid-template-columns:repeat(2,1fr)}
+.layout{grid-template-columns:1fr}
+.top{align-items:flex-start}
+.brand h1{font-size:17px}
+.hero h2{font-size:21px}
+.student{align-items:flex-start;flex-wrap:wrap}
+.student .meta{min-width:calc(100% - 55px)}
+.actions{width:100%;padding-left:46px}
+}
+</style>
+</head>
+<body>
+<main class="app">
+<header class="top">
+<div class="brand">
+<div class="ball">🏐</div>
+<div>
+<h1>ARENA BELÉM FTV</h1>
+<small>GESTÃO DO PROJETO SOCIAL</small>
+</div>
+</div>
+<div class="status">● Protótipo local</div>
+</header>
+
+<section class="hero">
+<h2>Gestão esportiva.</h2>
+<p>Alunos, desenvolvimento e frequência em um só lugar.</p>
+</section>
+
+<section class="stats">
+<div class="stat"><b id="total">0</b><span>Alunos cadastrados</span></div>
+<div class="stat"><b id="presentCount">0</b><span>Presentes nesta chamada</span></div>
+<div class="stat"><b id="absenceCount">0</b><span>Faltas nesta chamada</span></div>
+<div class="stat"><b id="alertCount">0</b><span>Alunos em alerta</span></div>
+</section>
+
+<nav class="tabs">
+<button class="active" data-tab="attendance">Fazer chamada</button>
+<button data-tab="students">Alunos</button>
+<button data-tab="history">Histórico</button>
+</nav>
+
+<section id="attendance" class="tabview">
+<div class="card">
+<div class="toolbar">
+<h3 style="margin:0;flex:1">Chamada do treino</h3>
+<select id="classSelect">
+<option>Turma 1</option>
+<option>Turma 2</option>
+<option>Turma 3</option>
+</select>
+<input type="date" id="date" style="max-width:160px">
+</div>
+<div class="toolbar">
+<span style="color:var(--muted);font-size:13px">Marque a situação de cada aluno. Pendente não é contado como falta.</span>
+</div>
+<div id="attendanceList"></div>
+<button class="goldbtn" id="saveCall">Salvar chamada no histórico</button>
+<p class="note">Os dados deste protótipo ficam salvos neste navegador. Ainda não há sincronização entre dispositivos.</p>
+</div>
+</section>
+
+<section id="students" class="tabview hidden">
+<div class="layout">
+<div class="card">
+<h3>Cadastrar aluno</h3>
+<label>Nome completo</label>
+<input id="studentName" placeholder="Ex.: Ana Silva">
+<div class="formrow">
+<div>
+<label>Turma</label>
+<select id="studentClass">
+<option>Turma 1</option>
+<option>Turma 2</option>
+<option>Turma 3</option>
+</select>
+</div>
+<div>
+<label>Nível</label>
+<input id="studentLevel" placeholder="Ex.: Iniciante">
+</div>
+</div>
+<label>Telefone (opcional)</label>
+<input id="studentPhone" placeholder="(00) 00000-0000">
+<button class="goldbtn" id="addStudent">Adicionar aluno</button>
+</div>
+<div class="card">
+<h3>Alunos cadastrados</h3>
+<div id="studentList"></div>
+</div>
+</div>
+</section>
+
+<section id="history" class="tabview hidden">
+<div class="card">
+<div class="toolbar">
+<h3 style="margin:0;flex:1">Histórico de chamadas</h3>
+<button class="secondary" id="exportCsv">Exportar CSV</button>
+</div>
+<div id="historyList"></div>
+</div>
+</section>
+
+<p class="footer">ARENA BELÉM FTV · Protótipo inicial para validação</p>
+</main>
+
+<script>
+const KEY='arena-belem-ftv-v1';
+const initial={
+students:[
+{id:'a1',name:'Ana Silva',className:'Turma 1',level:'Em avaliação',phone:''},
+{id:'a2',name:'Bruno Santos',className:'Turma 1',level:'Em avaliação',phone:''},
+{id:'a3',name:'Carlos Oliveira',className:'Turma 1',level:'Em avaliação',phone:''}
+],
+calls:[]
+};
+
+let db=JSON.parse(localStorage.getItem(KEY)||'null')||initial;
+let marks={};
+const $=id=>document.getElementById(id);
+const today=new Date();
+$('date').value=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+
+function persist(){
+localStorage.setItem(KEY,JSON.stringify(db));
+render();
+}
+
+function esc(s){
+return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function current(){return $('classSelect').value}
+
+function render(){
+const students=db.students;
+const cls=current();
+$('total').textContent=students.length;
+const list=students.filter(s=>s.className===cls);
+
+$('attendanceList').innerHTML=list.length?list.map(s=>{
+let v=marks[s.id]||'Pendente';
+return `<div class="student">
+<div class="avatar">${esc(s.name.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase())}</div>
+<div class="meta"><strong>${esc(s.name)}</strong><small>${esc(s.level||'Nível não definido')}</small></div>
+<div class="actions">
+${['Presente','Falta','Justificada','Pendente'].map(x=>`<button class="${x==='Presente'?'present':x==='Falta'?'absent':x==='Justificada'?'just':''} ${v===x?'chosen':''}" data-mark="${x}" data-id="${s.id}">${x}</button>`).join('')}
+</div>
+</div>`;
+}).join(''):'<p class="empty">Nenhum aluno cadastrado nesta turma. Cadastre alunos na aba Alunos.</p>';
+
+$('presentCount').textContent=list.filter(s=>marks[s.id]==='Presente').length;
+$('absenceCount').textContent=list.filter(s=>marks[s.id]==='Falta').length;
+
+let counts={};
+db.calls.forEach(c=>c.records.forEach(r=>{
+if(r.status==='Falta')counts[r.studentId]=(counts[r.studentId]||0)+1;
+}));
+$('alertCount').textContent=Object.values(counts).filter(n=>n>=2).length;
+
+$('studentList').innerHTML=students.length?students.map(s=>`
+<div class="student">
+<div class="avatar">${esc(s.name[0].toUpperCase())}</div>
+<div class="meta"><strong>${esc(s.name)}</strong><small>${esc(s.className)} · ${esc(s.level||'Nível não definido')}</small></div>
+</div>`).join(''):'<p class="empty">Nenhum aluno cadastrado.</p>';
+
+$('historyList').innerHTML=db.calls.length?`
+<table class="table">
+<thead><tr><th>Data</th><th>Turma</th><th>Aluno</th><th>Situação</th></tr></thead>
+<tbody>${db.calls.slice().reverse().flatMap(c=>c.records.map(r=>`
+<tr><td>${esc(c.date)}</td><td>${esc(c.className)}</td><td>${esc(r.name)}</td><td><span class="pill ${esc(r.status)}">${esc(r.status)}</span></td></tr>`)).join('')}
+</tbody></table>`:'<p class="empty">As chamadas salvas aparecerão aqui.</p>';
+}
+
+$('classSelect').addEventListener('change',()=>{
+marks={};
+render();
+});
+
+$('attendanceList').addEventListener('click',e=>{
+let b=e.target.closest('button[data-mark]');
+if(!b)return;
+marks[b.dataset.id]=b.dataset.mark;
+render();
+});
+
+$('saveCall').addEventListener('click',()=>{
+let cls=current(),date=$('date').value;
+let list=db.students.filter(s=>s.className===cls);
+if(!list.length){alert('Cadastre alunos nesta turma antes de salvar.');return}
+let records=list.map(s=>({studentId:s.id,name:s.name,status:marks[s.id]||'Pendente'}));
+let idx=db.calls.findIndex(c=>c.className===cls&&c.date===date);
+let call={id:idx>=0?db.calls[idx].id:'call-'+Date.now(),className:cls,date,records,savedAt:new Date().toISOString()};
+if(idx>=0){
+if(!confirm('Já existe uma chamada para esta turma e data. Deseja atualizar o registro?'))return;
+db.calls[idx]=call;
+}else db.calls.push(call);
+persist();
+alert('Chamada salva no histórico deste navegador.');
+});
+
+$('addStudent').addEventListener('click',()=>{
+let name=$('studentName').value.trim();
+if(!name){alert('Informe o nome do aluno.');return}
+db.students.push({
+id:'stu-'+Date.now(),
+name,
+className:$('studentClass').value,
+level:$('studentLevel').value.trim()||'Em avaliação',
+phone:$('studentPhone').value.trim()
+});
+$('studentName').value='';
+$('studentLevel').value='';
+$('studentPhone').value='';
+persist();
+alert('Aluno cadastrado.');
+});
+
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===b));
+document.querySelectorAll('.tabview').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab));
+}));
+
+$('exportCsv').addEventListener('click',()=>{
+let rows=[['Data','Turma','Aluno','Situação']];
+db.calls.forEach(c=>c.records.forEach(r=>rows.push([c.date,c.className,r.name,r.status])));
+let csv='\ufeff'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
+let a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+a.download='arena-belem-ftv-historico.csv';
+a.click();
+URL.revokeObjectURL(a.href);
+});
+
+render();
+</script>
+</body>
+</html>

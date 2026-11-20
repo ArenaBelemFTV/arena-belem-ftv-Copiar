@@ -45,6 +45,13 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 .student{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
 .student:last-child{border:0}
 .avatar{width:36px;height:36px;border-radius:50%;background:#332b18;color:var(--gold2);display:grid;place-items:center;font-weight:700}
+  .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
 .student .meta{flex:1}
 .student strong{display:block}
 .student small{color:var(--muted)}
@@ -370,10 +377,46 @@ backup();
 $('loginPanel').classList.add('hidden');
 $('mainApp').classList.remove('hidden');
 
+await loadStudentPhotos();
 render();
 status('● Nuvem sincronizada');
 }
+let studentPhotoUrls = new Map();
 
+async function loadStudentPhotos(){
+  studentPhotoUrls = new Map();
+
+  if(!currentUser || !Array.isArray(db.students)){
+    return;
+  }
+
+  const studentsWithPhotos = db.students.filter(s =>
+    s &&
+    s.id &&
+    typeof s.photoPath === 'string' &&
+    s.photoPath.startsWith(currentUser.id + '/')
+  );
+
+  await Promise.all(studentsWithPhotos.map(async s => {
+    const {data,error} = await sb.storage
+      .from('fotos-alunos')
+      .createSignedUrl(s.photoPath, 86400);
+
+    if(!error && data && data.signedUrl){
+      studentPhotoUrls.set(String(s.id), data.signedUrl);
+    }else if(error){
+      console.error('Erro ao carregar foto:', s.name, error.message);
+    }
+  }));
+}function studentAvatar(student, initials){
+  const photoUrl = studentPhotoUrls.get(String(student.id));
+
+  if(photoUrl){
+    return `<img src="${esc(photoUrl)}" alt="Foto de ${esc(student.name)}">`;
+  }
+
+  return esc(initials);
+}
 function render(){
 
 const students=db.students||[];
@@ -387,7 +430,7 @@ $('attendanceList').innerHTML=list.length?list.map(s=>{
 let v=marks[s.id]||'Pendente';
 
 return `<div class="student">
-<div class="avatar">${esc(s.name.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase())}</div>
+<div class="avatar">${studentAvatar(s, s.name.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase())}</div>
 <div class="meta">
 <strong>${esc(s.name)}</strong>
 <small>${esc(s.level||'Nível não definido')}</small>
@@ -426,6 +469,7 @@ const adminStatsByStudent = {};
 
 students.forEach(s => {
   adminStatsByStudent[s.id] = {
+    id: s.id,
     name: s.name,
     className: s.className,
     present: 0,
@@ -521,7 +565,7 @@ ${Object.values(adminStatsByStudent).map(s => {
   const freq = total ? Math.round(s.present/total*100) : 0;
 
   return `<tr>
-    <td>${esc(s.name)}</td>
+   <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar">${studentAvatar(s, s.name[0].toUpperCase())}</span>${esc(s.name)}</span></td>
     <td>${esc(s.className)}</td>
     <td>${s.present}</td>
     <td>${s.absences}</td>
@@ -538,7 +582,7 @@ const warnings = Object.values(adminStatsByStudent)
 $('warningReport').innerHTML = warnings.length
   ? warnings.map(s => `
     <div class="student">
-      <div class="avatar">${esc(s.name[0].toUpperCase())}</div>
+      <div class="avatar">${studentAvatar(s, s.name[0].toUpperCase())}</div>
       <div class="meta">
         <strong>${esc(s.name)}</strong>
         <small>${esc(s.className)} · ${s.absences} faltas registradas · ${Math.round(s.present / (s.present + s.absences) * 100)}% de frequência</small>
@@ -549,7 +593,7 @@ $('warningReport').innerHTML = warnings.length
 
 $('studentList').innerHTML=students.length?students.map(s=>`
 <div class="student">
-<div class="avatar">${esc(s.name[0].toUpperCase())}</div>
+<div class="avatar">${studentAvatar(s, s.name[0].toUpperCase())}</div>
 <div class="meta">
 <strong>${esc(s.name)}</strong>
 <small>${esc(s.className)} · ${esc(s.level||'Nível não definido')}</small>

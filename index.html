@@ -230,7 +230,11 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 <label>Telefone (opcional)</label>
 <input id="studentPhone" placeholder="(00) 00000-0000">
 
-<button class="goldbtn" id="addStudent">Adicionar aluno</button>
+<div>
+  <label>Foto do aluno</label>
+  <input id="studentPhoto" type="file" accept="image/jpeg,image/png,image/webp">
+</div>
+  <button class="goldbtn" id="addStudent">Adicionar aluno</button>
 </div>
 
 <div class="card">
@@ -692,12 +696,50 @@ alert('Informe o nome do aluno.');
 return;
 }
 
-db.students.push({
-id:'stu-'+Date.now(),
+const studentId = 's' + Date.now();
+let photoPath = null;
+const photoFile = $('#studentPhoto').files[0];
+
+if (photoFile) {
+  if (!photoFile.type.startsWith('image/')) {
+    alert('Selecione uma imagem válida.');
+    return;
+  }
+
+  if (photoFile.size > 5 * 1024 * 1024) {
+    alert('A foto deve ter no máximo 5 MB.');
+    return;
+  }
+
+  const ext = (photoFile.name.split('.').pop() || 'jpg')
+    .toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const { data: { user }, error: authError } = await sb.auth.getUser();
+
+if (authError || !user) {
+  alert('Sessão não encontrada. Faça login novamente.');
+  return;
+}
+
+photoPath = `${user.id}/${studentId}.${ext}`;
+
+  const { error: uploadError } = await sb.storage
+    .from('fotos-alunos')
+    .upload(photoPath, photoFile, {
+      upsert: true,
+      contentType: photoFile.type
+    });
+
+  if (uploadError) {
+    alert('Erro ao enviar foto: ' + uploadError.message);
+    return;
+  }
+}db.students.push({
+id: studentId,
 name,
 className:$('studentClass').value,
 level:$('studentLevel').value.trim()||'Em avaliação',
-phone:$('studentPhone').value.trim()
+phone:$('studentPhone').value.trim(),photoPath
 });
 
 $('studentName').value='';

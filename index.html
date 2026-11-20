@@ -133,9 +133,56 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 <button class="active" data-tab="attendance">Fazer chamada</button>
 <button data-tab="students">Alunos</button>
 <button data-tab="history">Histórico</button>
+<button data-tab="admin">Painel Administrativo</button>
 </nav>
 
-<section id="attendance" class="tabview">
+<section id="admin" class="tabview hidden">
+
+  <div class="card">
+    <h3>Painel Administrativo</h3>
+    <p style="color:var(--muted)">
+      Visão geral do desempenho do projeto social.
+    </p>
+
+    <div class="stats">
+      <div class="stat">
+        <b id="adminTotal">0</b>
+        <span>Total de alunos</span>
+      </div>
+
+      <div class="stat">
+        <b id="adminCalls">0</b>
+        <span>Chamadas realizadas</span>
+      </div>
+
+      <div class="stat">
+        <b id="adminPresence">0%</b>
+        <span>Frequência geral</span>
+      </div>
+
+      <div class="stat">
+        <b id="adminAbsences">0</b>
+        <span>Total de faltas</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Resumo por turma</h3>
+    <div id="classReport"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Frequência individual</h3>
+    <div id="studentReport"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Alunos que precisam de atenção</h3>
+    <div id="warningReport"></div>
+  </div>
+
+</section><section id="attendance" class="tabview">
 <div class="card">
 <div class="toolbar">
 <h3 style="margin:0;flex:1">Chamada do treino</h3>
@@ -363,6 +410,138 @@ counts[r.studentId]=(counts[r.studentId]||0)+1;
 });
 
 $('alertCount').textContent=Object.values(counts).filter(n=>n>=2).length;
+  // PAINEL ADMINISTRATIVO
+const adminCalls = db.calls || [];
+
+let adminPresent = 0;
+let adminAbsences = 0;
+let adminExcused = 0;
+let adminPending = 0;
+
+const adminStatsByStudent = {};
+
+students.forEach(s => {
+  adminStatsByStudent[s.id] = {
+    name: s.name,
+    className: s.className,
+    present: 0,
+    absences: 0,
+    excused: 0,
+    pending: 0
+  };
+});
+
+adminCalls.forEach(c => {
+  (c.records || []).forEach(r => {
+    const st = adminStatsByStudent[r.studentId];
+    if (!st) return;
+
+    if (r.status === 'Presente') {
+      st.present++;
+      adminPresent++;
+    } else if (r.status === 'Falta') {
+      st.absences++;
+      adminAbsences++;
+    } else if (r.status === 'Justificada') {
+      st.excused++;
+      adminExcused++;
+    } else {
+      st.pending++;
+      adminPending++;
+    }
+  });
+});
+
+const adminTotalConsidered =
+  adminPresent + adminAbsences;
+
+const adminFrequency = adminTotalConsidered
+  ? Math.round(adminPresent / adminTotalConsidered * 100)
+  : 0;
+
+$('adminTotal').textContent = students.length;
+$('adminCalls').textContent = adminCalls.length;
+$('adminPresence').textContent = adminFrequency + '%';
+$('adminAbsences').textContent = adminAbsences;
+
+// RESUMO POR TURMA
+const adminClasses = ['Turma 1', 'Turma 2', 'Turma 3'];
+
+$('classReport').innerHTML = `
+<table class="table">
+<thead>
+<tr>
+<th>Turma</th>
+<th>Alunos</th>
+<th>Presenças</th>
+<th>Faltas</th>
+<th>Frequência</th>
+</tr>
+</thead>
+<tbody>
+${adminClasses.map(cl => {
+  const group = Object.values(adminStatsByStudent)
+    .filter(s => s.className === cl);
+
+  const p = group.reduce((n,s) => n+s.present,0);
+  const f = group.reduce((n,s) => n+s.absences,0);
+  const total = p + f;
+  const freq = total ? Math.round(p/total*100) : 0;
+
+  return `<tr>
+    <td>${esc(cl)}</td>
+    <td>${group.length}</td>
+    <td>${p}</td>
+    <td>${f}</td>
+    <td>${freq}%</td>
+  </tr>`;
+}).join('')}
+</tbody>
+</table>`;
+
+// FREQUENCIA INDIVIDUAL
+$('studentReport').innerHTML = `
+<table class="table">
+<thead>
+<tr>
+<th>Aluno</th>
+<th>Turma</th>
+<th>Presenças</th>
+<th>Faltas</th>
+<th>Frequência</th>
+</tr>
+</thead>
+<tbody>
+${Object.values(adminStatsByStudent).map(s => {
+  const total = s.present + s.absences;
+  const freq = total ? Math.round(s.present/total*100) : 0;
+
+  return `<tr>
+    <td>${esc(s.name)}</td>
+    <td>${esc(s.className)}</td>
+    <td>${s.present}</td>
+    <td>${s.absences}</td>
+    <td>${freq}%</td>
+  </tr>`;
+}).join('')}
+</tbody>
+</table>`;
+
+// ALUNOS EM ALERTA
+const warnings = Object.values(adminStatsByStudent)
+  .filter(s => s.absences >= 2);
+
+$('warningReport').innerHTML = warnings.length
+  ? warnings.map(s => `
+    <div class="student">
+      <div class="avatar">${esc(s.name[0].toUpperCase())}</div>
+      <div class="meta">
+        <strong>${esc(s.name)}</strong>
+        <small>${esc(s.className)} · ${s.absences} faltas registradas</small>
+      </div>
+    </div>
+  `).join('')
+  : '<p class="empty">Nenhum aluno em alerta.</p>';
 
 $('studentList').innerHTML=students.length?students.map(s=>`
 <div class="student">

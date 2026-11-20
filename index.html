@@ -4,16 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Arena Belém FTV</title>
+
 <style>
-:root{--bg:#0d0d0f;--panel:#171719;--panel2:#202023;--gold:#d4af37;--gold2:#f0d778;--text:#f5f2e8;--muted:#aaa59a;--line:#34312a;--green:#2c9b68;--red:#d45b52;--amber:#c9952c}
+:root{
+--bg:#0d0d0f;--panel:#171719;--panel2:#202023;
+--gold:#d4af37;--gold2:#f0d778;--text:#f5f2e8;
+--muted:#aaa59a;--line:#34312a;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,sans-serif}
 button,input,select{font:inherit}
 button{cursor:pointer;border:0;border-radius:10px;padding:10px 14px;font-weight:650}
 .app{max-width:1180px;margin:auto;padding:22px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
 .brand{display:flex;align-items:center;gap:13px}
-.ball{width:48px;height:48px;border:2px solid var(--gold);border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:24px}
+.ball{width:48px;height:48px;border:2px solid var(--gold);border-radius:50%;display:grid;place-items:center;font-size:24px}
 .brand h1{margin:0;color:var(--gold);font-size:20px;letter-spacing:1.3px}
 .brand small{color:var(--muted);letter-spacing:2px}
 .status{color:var(--gold2);border:1px solid #695626;padding:7px 10px;border-radius:30px;font-size:12px}
@@ -61,6 +66,7 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 .pill.Pendente{background:#333;color:#ccc}
 .note{font-size:12px;color:var(--muted);margin-top:14px}
 .footer{margin:24px 0 5px;text-align:center;color:#777;font-size:12px}
+#loginPanel{max-width:440px;margin:50px auto}
 @media(max-width:760px){
 .app{padding:14px}
 .stats{grid-template-columns:repeat(2,1fr)}
@@ -73,10 +79,30 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 .actions{width:100%;padding-left:46px}
 }
 </style>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
-<main class="app">
+
+<section id="loginPanel" class="card">
+<h2 style="color:var(--gold2);margin-top:0">ARENA BELÉM FTV</h2>
+<p style="color:var(--muted)">Entre para acessar os dados do projeto.</p>
+
+<label>E-mail</label>
+<input id="authEmail" type="email" placeholder="seu@email.com">
+
+<label>Senha</label>
+<input id="authPassword" type="password" placeholder="Mínimo de 6 caracteres">
+
+<button class="goldbtn" id="loginBtn">Entrar</button>
+<button class="secondary" style="width:100%;margin-top:8px" id="signupBtn">Criar minha conta</button>
+
+<p class="note" id="authMessage">Crie sua conta ou entre com seus dados.</p>
+</section>
+
+<main class="app hidden" id="mainApp">
+
 <header class="top">
 <div class="brand">
 <div class="ball">🏐</div>
@@ -85,7 +111,10 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 <small>GESTÃO DO PROJETO SOCIAL</small>
 </div>
 </div>
-<div class="status">● Protótipo local</div>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<div class="status" id="connectionStatus">● Conectando...</div>
+<button class="secondary" id="logoutBtn">Sair</button>
+</div>
 </header>
 
 <section class="hero">
@@ -117,12 +146,14 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 </select>
 <input type="date" id="date" style="max-width:160px">
 </div>
+
 <div class="toolbar">
-<span style="color:var(--muted);font-size:13px">Marque a situação de cada aluno. Pendente não é contado como falta.</span>
+<span style="color:var(--muted);font-size:13px">Marque a situação de cada aluno.</span>
 </div>
+
 <div id="attendanceList"></div>
 <button class="goldbtn" id="saveCall">Salvar chamada no histórico</button>
-<p class="note">Os dados deste protótipo ficam salvos neste navegador. Ainda não há sincronização entre dispositivos.</p>
+<p class="note">Dados sincronizados com a nuvem.</p>
 </div>
 </section>
 
@@ -130,8 +161,10 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 <div class="layout">
 <div class="card">
 <h3>Cadastrar aluno</h3>
+
 <label>Nome completo</label>
 <input id="studentName" placeholder="Ex.: Ana Silva">
+
 <div class="formrow">
 <div>
 <label>Turma</label>
@@ -146,10 +179,13 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 <input id="studentLevel" placeholder="Ex.: Iniciante">
 </div>
 </div>
+
 <label>Telefone (opcional)</label>
 <input id="studentPhone" placeholder="(00) 00000-0000">
+
 <button class="goldbtn" id="addStudent">Adicionar aluno</button>
 </div>
+
 <div class="card">
 <h3>Alunos cadastrados</h3>
 <div id="studentList"></div>
@@ -167,11 +203,17 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 </div>
 </section>
 
-<p class="footer">ARENA BELÉM FTV · Protótipo inicial para validação</p>
+<p class="footer">ARENA BELÉM FTV · Gestão do projeto social</p>
 </main>
 
 <script>
+const SUPABASE_URL='https://ofnhjbhhmiqbkplhpvpo.supabase.co';
+const SUPABASE_KEY='sb_publishable_0ugyO31zIe2bQd3DcmLj-Q_5lwRSCyR';
+
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
 const KEY='arena-belem-ftv-v1';
+
 const initial={
 students:[
 {id:'a1',name:'Ana Silva',className:'Turma 1',level:'Em avaliação',phone:''},
@@ -183,91 +225,294 @@ calls:[]
 
 let db=JSON.parse(localStorage.getItem(KEY)||'null')||initial;
 let marks={};
+let currentUser=null;
+
 const $=id=>document.getElementById(id);
+
 const today=new Date();
 $('date').value=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
 
-function persist(){
-localStorage.setItem(KEY,JSON.stringify(db));
-render();
+function status(t){
+$('connectionStatus').textContent=t;
+}
+
+function message(t){
+$('authMessage').textContent=t;
 }
 
 function esc(s){
-return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+return String(s).replace(/[&<>"']/g,c=>({
+'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[c]));
 }
 
-function current(){return $('classSelect').value}
+function current(){
+return $('classSelect').value;
+}
+
+function backup(){
+localStorage.setItem(KEY,JSON.stringify(db));
+}
+
+async function persist(){
+backup();
+render();
+
+if(!currentUser)return;
+
+status('● Salvando na nuvem...');
+
+const {error}=await sb.from('arena_dados').upsert({
+user_id:currentUser.id,
+dados:db,
+updated_at:new Date().toISOString()
+},{onConflict:'user_id'});
+
+if(error){
+status('● Erro na nuvem');
+alert('Erro ao sincronizar: '+error.message);
+}else{
+status('● Nuvem sincronizada');
+}
+}
+
+async function loadCloud(user){
+currentUser=user;
+status('● Carregando dados...');
+
+const {data,error}=await sb
+.from('arena_dados')
+.select('dados')
+.eq('user_id',user.id)
+.maybeSingle();
+
+if(error){
+status('● Erro de conexão');
+alert('Erro ao carregar: '+error.message);
+return;
+}
+
+if(data && data.dados){
+db=data.dados;
+backup();
+}else{
+const local=JSON.parse(localStorage.getItem(KEY)||'null');
+
+if(local && Array.isArray(local.students) && Array.isArray(local.calls)){
+db=local;
+}
+
+const {error:saveError}=await sb.from('arena_dados').upsert({
+user_id:user.id,
+dados:db,
+updated_at:new Date().toISOString()
+},{onConflict:'user_id'});
+
+if(saveError){
+status('● Erro ao salvar dados');
+alert('Erro na primeira sincronização: '+saveError.message);
+return;
+}
+backup();
+}
+
+$('loginPanel').classList.add('hidden');
+$('mainApp').classList.remove('hidden');
+
+render();
+status('● Nuvem sincronizada');
+}
 
 function render(){
-const students=db.students;
+
+const students=db.students||[];
 const cls=current();
+
 $('total').textContent=students.length;
+
 const list=students.filter(s=>s.className===cls);
 
 $('attendanceList').innerHTML=list.length?list.map(s=>{
 let v=marks[s.id]||'Pendente';
+
 return `<div class="student">
 <div class="avatar">${esc(s.name.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase())}</div>
-<div class="meta"><strong>${esc(s.name)}</strong><small>${esc(s.level||'Nível não definido')}</small></div>
+<div class="meta">
+<strong>${esc(s.name)}</strong>
+<small>${esc(s.level||'Nível não definido')}</small>
+</div>
 <div class="actions">
-${['Presente','Falta','Justificada','Pendente'].map(x=>`<button class="${x==='Presente'?'present':x==='Falta'?'absent':x==='Justificada'?'just':''} ${v===x?'chosen':''}" data-mark="${x}" data-id="${s.id}">${x}</button>`).join('')}
+${['Presente','Falta','Justificada','Pendente'].map(x=>
+`<button class="${x==='Presente'?'present':x==='Falta'?'absent':x==='Justificada'?'just':''} ${v===x?'chosen':''}" data-mark="${x}" data-id="${s.id}">${x}</button>`
+).join('')}
 </div>
 </div>`;
-}).join(''):'<p class="empty">Nenhum aluno cadastrado nesta turma. Cadastre alunos na aba Alunos.</p>';
+}).join(''):'<p class="empty">Nenhum aluno cadastrado nesta turma.</p>';
 
 $('presentCount').textContent=list.filter(s=>marks[s.id]==='Presente').length;
 $('absenceCount').textContent=list.filter(s=>marks[s.id]==='Falta').length;
 
 let counts={};
-db.calls.forEach(c=>c.records.forEach(r=>{
-if(r.status==='Falta')counts[r.studentId]=(counts[r.studentId]||0)+1;
-}));
+
+(db.calls||[]).forEach(c=>{
+(c.records||[]).forEach(r=>{
+if(r.status==='Falta'){
+counts[r.studentId]=(counts[r.studentId]||0)+1;
+}
+});
+});
+
 $('alertCount').textContent=Object.values(counts).filter(n=>n>=2).length;
 
 $('studentList').innerHTML=students.length?students.map(s=>`
 <div class="student">
 <div class="avatar">${esc(s.name[0].toUpperCase())}</div>
-<div class="meta"><strong>${esc(s.name)}</strong><small>${esc(s.className)} · ${esc(s.level||'Nível não definido')}</small></div>
-</div>`).join(''):'<p class="empty">Nenhum aluno cadastrado.</p>';
+<div class="meta">
+<strong>${esc(s.name)}</strong>
+<small>${esc(s.className)} · ${esc(s.level||'Nível não definido')}</small>
+</div>
+</div>
+`).join(''):'<p class="empty">Nenhum aluno cadastrado.</p>';
 
-$('historyList').innerHTML=db.calls.length?`
+$('historyList').innerHTML=(db.calls||[]).length?`
 <table class="table">
-<thead><tr><th>Data</th><th>Turma</th><th>Aluno</th><th>Situação</th></tr></thead>
-<tbody>${db.calls.slice().reverse().flatMap(c=>c.records.map(r=>`
-<tr><td>${esc(c.date)}</td><td>${esc(c.className)}</td><td>${esc(r.name)}</td><td><span class="pill ${esc(r.status)}">${esc(r.status)}</span></td></tr>`)).join('')}
-</tbody></table>`:'<p class="empty">As chamadas salvas aparecerão aqui.</p>';
+<thead>
+<tr><th>Data</th><th>Turma</th><th>Aluno</th><th>Situação</th></tr>
+</thead>
+<tbody>
+${db.calls.slice().reverse().flatMap(c=>
+(c.records||[]).map(r=>`
+<tr>
+<td>${esc(c.date)}</td>
+<td>${esc(c.className)}</td>
+<td>${esc(r.name)}</td>
+<td><span class="pill ${esc(r.status)}">${esc(r.status)}</span></td>
+</tr>
+`)
+).join('')}
+</tbody>
+</table>`:'<p class="empty">As chamadas salvas aparecerão aqui.</p>';
 }
 
+// LOGIN
+$('loginBtn').addEventListener('click',async()=>{
+const email=$('authEmail').value.trim();
+const password=$('authPassword').value;
+
+if(!email||!password){
+message('Informe e-mail e senha.');
+return;
+}
+
+message('Entrando...');
+
+const {data,error}=await sb.auth.signInWithPassword({email,password});
+
+if(error){
+message(error.message);
+return;
+}
+
+await loadCloud(data.user);
+});
+
+// CRIAR CONTA
+$('signupBtn').addEventListener('click',async()=>{
+const email=$('authEmail').value.trim();
+const password=$('authPassword').value;
+
+if(!email||password.length<6){
+message('Informe e-mail e senha com pelo menos 6 caracteres.');
+return;
+}
+
+message('Criando conta...');
+
+const {data,error}=await sb.auth.signUp({email,password});
+
+if(error){
+message(error.message);
+return;
+}
+
+if(data.session){
+await loadCloud(data.user);
+}else{
+message('Conta criada! Confirme seu e-mail e depois faça login.');
+}
+});
+
+// SAIR
+$('logoutBtn').addEventListener('click',async()=>{
+await sb.auth.signOut();
+currentUser=null;
+$('mainApp').classList.add('hidden');
+$('loginPanel').classList.remove('hidden');
+status('● Desconectado');
+});
+
+// TROCAR TURMA
 $('classSelect').addEventListener('change',()=>{
 marks={};
 render();
 });
 
+// MARCAR PRESENÇA
 $('attendanceList').addEventListener('click',e=>{
-let b=e.target.closest('button[data-mark]');
+const b=e.target.closest('button[data-mark]');
 if(!b)return;
+
 marks[b.dataset.id]=b.dataset.mark;
 render();
 });
 
-$('saveCall').addEventListener('click',()=>{
-let cls=current(),date=$('date').value;
-let list=db.students.filter(s=>s.className===cls);
-if(!list.length){alert('Cadastre alunos nesta turma antes de salvar.');return}
-let records=list.map(s=>({studentId:s.id,name:s.name,status:marks[s.id]||'Pendente'}));
-let idx=db.calls.findIndex(c=>c.className===cls&&c.date===date);
-let call={id:idx>=0?db.calls[idx].id:'call-'+Date.now(),className:cls,date,records,savedAt:new Date().toISOString()};
+// SALVAR CHAMADA
+$('saveCall').addEventListener('click',async()=>{
+const cls=current();
+const date=$('date').value;
+const list=db.students.filter(s=>s.className===cls);
+
+if(!list.length){
+alert('Cadastre alunos nesta turma antes de salvar.');
+return;
+}
+
+const records=list.map(s=>({
+studentId:s.id,
+name:s.name,
+status:marks[s.id]||'Pendente'
+}));
+
+const idx=db.calls.findIndex(c=>c.className===cls&&c.date===date);
+
+const call={
+id:idx>=0?db.calls[idx].id:'call-'+Date.now(),
+className:cls,
+date,
+records,
+savedAt:new Date().toISOString()
+};
+
 if(idx>=0){
-if(!confirm('Já existe uma chamada para esta turma e data. Deseja atualizar o registro?'))return;
+if(!confirm('Já existe uma chamada nesta data. Deseja atualizar?'))return;
 db.calls[idx]=call;
-}else db.calls.push(call);
-persist();
-alert('Chamada salva no histórico deste navegador.');
+}else{
+db.calls.push(call);
+}
+
+await persist();
+alert('Chamada salva!');
 });
 
-$('addStudent').addEventListener('click',()=>{
-let name=$('studentName').value.trim();
-if(!name){alert('Informe o nome do aluno.');return}
+// CADASTRAR ALUNO
+$('addStudent').addEventListener('click',async()=>{
+const name=$('studentName').value.trim();
+
+if(!name){
+alert('Informe o nome do aluno.');
+return;
+}
+
 db.students.push({
 id:'stu-'+Date.now(),
 name,
@@ -275,30 +520,63 @@ className:$('studentClass').value,
 level:$('studentLevel').value.trim()||'Em avaliação',
 phone:$('studentPhone').value.trim()
 });
+
 $('studentName').value='';
 $('studentLevel').value='';
 $('studentPhone').value='';
-persist();
-alert('Aluno cadastrado.');
+
+await persist();
+alert('Aluno cadastrado!');
 });
 
-document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
-document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('active',x===b));
-document.querySelectorAll('.tabview').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab));
-}));
+// ABAS
+document.querySelectorAll('.tabs button').forEach(b=>{
+b.addEventListener('click',()=>{
+document.querySelectorAll('.tabs button').forEach(x=>
+x.classList.toggle('active',x===b));
 
+document.querySelectorAll('.tabview').forEach(x=>
+x.classList.toggle('hidden',x.id!==b.dataset.tab));
+});
+});
+
+// EXPORTAR CSV
 $('exportCsv').addEventListener('click',()=>{
-let rows=[['Data','Turma','Aluno','Situação']];
-db.calls.forEach(c=>c.records.forEach(r=>rows.push([c.date,c.className,r.name,r.status])));
-let csv='\ufeff'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
-let a=document.createElement('a');
+const rows=[['Data','Turma','Aluno','Situação']];
+
+(db.calls||[]).forEach(c=>{
+(c.records||[]).forEach(r=>{
+rows.push([c.date,c.className,r.name,r.status]);
+});
+});
+
+const csv='\ufeff'+rows.map(row=>
+row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')
+).join('\n');
+
+const a=document.createElement('a');
 a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
 a.download='arena-belem-ftv-historico.csv';
 a.click();
 URL.revokeObjectURL(a.href);
 });
 
-render();
+// VERIFICAR SESSAO
+(async()=>{
+const {data:{session},error}=await sb.auth.getSession();
+
+if(error){
+message('Erro ao verificar sessão: '+error.message);
+return;
+}
+
+if(session){
+await loadCloud(session.user);
+}else{
+status('● Aguardando login');
+}
+})();
+
 </script>
 </body>
 </html>

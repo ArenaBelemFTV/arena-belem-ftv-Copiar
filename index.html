@@ -598,6 +598,7 @@ $('studentList').innerHTML=students.length?students.map(s=>`
 <strong>${esc(s.name)}</strong>
 <small>${esc(s.className)} · ${esc(s.level||'Nível não definido')}</small>
 </div>
+<button type="button" class="photoUploadBtn" data-photo-student="${esc(s.id)}">Adicionar foto</button>
 </div>
 `).join(''):'<p class="empty">Nenhum aluno cadastrado.</p>';
 
@@ -825,7 +826,85 @@ a.download='arena-belem-ftv-historico.csv';
 a.click();
 URL.revokeObjectURL(a.href);
 });
+$('studentList').addEventListener('click', async (event) => {
+  const button = event.target.closest('.photoUploadBtn');
+  if(!button) return;
 
+  const studentId = button.dataset.photoStudent;
+  const student = db.students.find(s => String(s.id) === String(studentId));
+
+  if(!student || !currentUser){
+    alert('Aluno ou sessão não encontrado.');
+    return;
+  }
+
+  const ownerId = currentUser.id;
+  const picker = document.createElement('input');
+
+  picker.type = 'file';
+  picker.accept = 'image/jpeg,image/png,image/webp';
+
+  picker.onchange = async () => {
+    const file = picker.files[0];
+    if(!file) return;
+
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)){
+      alert('Selecione uma imagem JPG, PNG ou WEBP.');
+      return;
+    }
+
+    if(file.size > 5 * 1024 * 1024){
+      alert('A foto deve ter no máximo 5 MB.');
+      return;
+    }
+
+    const ext = file.type === 'image/png' ? 'png'
+      : file.type === 'image/webp' ? 'webp' : 'jpg';
+
+    const photoPath = `${ownerId}/${student.id}.${ext}`;
+    const previousPhotoPath = student.photoPath;
+
+    button.disabled = true;
+
+    try {
+      const {error:uploadError} = await sb.storage
+        .from('fotos-alunos')
+        .upload(photoPath, file, {
+          upsert: true,
+          contentType: file.type
+        });
+
+      if(uploadError) throw uploadError;
+
+      student.photoPath = photoPath;
+
+      const {error:saveError} = await sb
+        .from('arena_dados')
+        .upsert({
+          user_id: ownerId,
+          dados: db,
+          updated_at: new Date().toISOString()
+        }, {onConflict:'user_id'});
+
+      if(saveError) throw saveError;
+
+      backup();
+      await loadStudentPhotos();
+      render();
+
+      status('● Foto atualizada');
+      alert('Fotografia do aluno atualizada com sucesso!');
+
+    } catch(error) {
+      student.photoPath = previousPhotoPath;
+      alert('Erro ao atualizar fotografia: ' + error.message);
+    } finally {
+      button.disabled = false;
+    }
+  };
+
+  picker.click();
+});
 // VERIFICAR SESSAO
 (async()=>{
 const {data:{session},error}=await sb.auth.getSession();

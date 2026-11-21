@@ -528,9 +528,7 @@ return esc(initials);
 
 function render(){
 
-const students=[...(db.students||[])].sort((a,b)=>
-String(a.name||'').localeCompare(String(b.name||''),'pt-BR',{sensitivity:'base'})
-);
+const students=db.students||[];
 const cls=current();
 
 $('total').textContent=students.length;
@@ -758,9 +756,8 @@ $('warningReport').innerHTML = warnings.length
 : '<p class="empty">Nenhum aluno em alerta.</p>';
 
 // LISTA DE ALUNOS
-[...students].sort((a,b)=>
-String(a.name||'').localeCompare(String(b.name||''),'pt-BR',{sensitivity:'base'})
-).map(s=>`
+
+$('studentList').innerHTML=students.length?students.map(s=>`
 <div class="student">
 <div class="avatar">${studentAvatar(s, s.name[0].toUpperCase())}</div>
 <div class="meta">
@@ -778,120 +775,24 @@ String(a.name||'').localeCompare(String(b.name||''),'pt-BR',{sensitivity:'base'}
 // HISTÓRICO
 
 $('historyList').innerHTML=(db.calls||[]).length?`
-<p class="note">
-Para corrigir uma chamada, escolha a nova situação e clique em Salvar.
-</p>
-
 <table class="table">
 <thead>
-<tr>
-<th>Data</th>
-<th>Turma</th>
-<th>Aluno</th>
-<th>Situação atual</th>
-<th>Corrigir</th>
-</tr>
+<tr><th>Data</th><th>Turma</th><th>Aluno</th><th>Situação</th></tr>
 </thead>
 <tbody>
-${db.calls.map((c,callIndex)=>({c,callIndex})).reverse().flatMap(({c,callIndex})=>
-(c.records||[]).map((r,recordIndex)=>`
+${db.calls.slice().reverse().flatMap(c=>
+(c.records||[]).map(r=>`
 <tr>
 <td>${esc(c.date)}</td>
 <td>${esc(c.className)}</td>
 <td>${esc(r.name)}</td>
 <td><span class="pill ${esc(r.status)}">${esc(r.status)}</span></td>
-<td>
-<div style="display:flex;gap:5px;flex-wrap:wrap">
-<select data-correction-status="${callIndex}-${recordIndex}" style="min-width:115px;padding:7px">
-${['Presente','Falta','Justificada','Pendente'].map(x=>
-`<option value="${x}" ${r.status===x?'selected':''}>${x}</option>`
-).join('')}
-</select>
-<button type="button" class="secondary"
-data-save-correction="${callIndex}-${recordIndex}">
-Salvar
-</button>
-</div>
-</td>
-</tr>
 `)
 ).join('')}
 </tbody>
 </table>`:'<p class="empty">As chamadas salvas aparecerão aqui.</p>';
 
 }
-  // CORRIGIR CHAMADA PELO HISTORICO
-$('historyList').addEventListener('click', async (event) => {
-
-const button = event.target.closest('[data-save-correction]');
-if (!button) return;
-
-if (!currentUser) {
-alert('Sessão não encontrada. Faça login novamente.');
-return;
-}
-
-const [callIndexText, recordIndexText] =
-button.dataset.saveCorrection.split('-');
-
-const callIndex = Number(callIndexText);
-const recordIndex = Number(recordIndexText);
-
-const call = db.calls[callIndex];
-const record = call && call.records && call.records[recordIndex];
-
-const select = $('historyList').querySelector(
-`[data-correction-status="${callIndex}-${recordIndex}"]`
-);
-
-if (!record || !select) {
-alert('Registro não encontrado.');
-return;
-}
-
-const oldStatus = record.status;
-const newStatus = select.value;
-
-if (oldStatus === newStatus) {
-alert('A situação já está correta.');
-return;
-}
-
-if (!confirm(
-`Confirmar correção de ${record.name}?
-
-De: ${oldStatus}
-Para: ${newStatus}
-Data: ${call.date} · ${call.className}`
-)) return;
-
-button.disabled = true;
-
-record.status = newStatus;
-backup();
-render();
-
-status('● Salvando correção...');
-
-const {error} = await sb.from('arena_dados').upsert({
-user_id: currentUser.id,
-dados: db,
-updated_at: new Date().toISOString()
-}, {onConflict:'user_id'});
-
-if (error) {
-record.status = oldStatus;
-backup();
-render();
-status('● Erro na nuvem');
-alert('Erro ao salvar correção: ' + error.message);
-return;
-}
-
-status('● Nuvem sincronizada');
-alert('Chamada corrigida e sincronizada com sucesso!');
-
-});
 // LOGIN
 $('loginBtn').addEventListener('click',async()=>{
 const email=$('authEmail').value.trim();

@@ -758,8 +758,9 @@ $('warningReport').innerHTML = warnings.length
 : '<p class="empty">Nenhum aluno em alerta.</p>';
 
 // LISTA DE ALUNOS
-
-$('studentList').innerHTML=students.length?students.map(s=>`
+[...students].sort((a,b)=>
+String(a.name||'').localeCompare(String(b.name||''),'pt-BR',{sensitivity:'base'})
+).map(s=>`
 <div class="student">
 <div class="avatar">${studentAvatar(s, s.name[0].toUpperCase())}</div>
 <div class="meta">

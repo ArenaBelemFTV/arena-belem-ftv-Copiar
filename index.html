@@ -45,12 +45,12 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 .student{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
 .student:last-child{border:0}
 .avatar{width:36px;height:36px;border-radius:50%;background:#332b18;color:var(--gold2);display:grid;place-items:center;font-weight:700}
-  .avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  display: block;
+.avatar img {
+width:100%;
+height:100%;
+object-fit:cover;
+border-radius:50%;
+display:block;
 }
 .student .meta{flex:1}
 .student strong{display:block}
@@ -74,6 +74,7 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 .note{font-size:12px;color:var(--muted);margin-top:14px}
 .footer{margin:24px 0 5px;text-align:center;color:#777;font-size:12px}
 #loginPanel{max-width:440px;margin:50px auto}
+
 @media(max-width:760px){
 .app{padding:14px}
 .stats{grid-template-columns:repeat(2,1fr)}
@@ -85,6 +86,55 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 .student .meta{min-width:calc(100% - 55px)}
 .actions{width:100%;padding-left:46px}
 }
+
+.student-management{
+display:flex;
+gap:6px;
+flex-wrap:wrap;
+margin-left:auto;
+}
+.student-management button{
+padding:7px 9px;
+font-size:12px;
+background:#292929;
+color:#ddd;
+border:1px solid #454545;
+}
+.student-management .danger{
+border-color:#75403b;
+color:#ffaaa2;
+}
+.modal-backdrop{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.78);
+display:flex;
+align-items:center;
+justify-content:center;
+padding:16px;
+z-index:1000;
+}
+.modal-backdrop.hidden{display:none}
+.student-modal{
+width:min(100%,480px);
+max-height:90vh;
+overflow:auto;
+background:var(--panel);
+border:1px solid #695626;
+border-radius:16px;
+padding:20px;
+box-shadow:0 20px 60px #0009;
+}
+.student-modal h3{
+margin:0 0 8px;
+color:var(--gold2);
+}
+.modal-actions{
+display:flex;
+gap:8px;
+margin-top:16px;
+}
+.modal-actions button{flex:1}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -118,6 +168,7 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 <small>GESTÃO DO PROJETO SOCIAL</small>
 </div>
 </div>
+
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
 <div class="status" id="connectionStatus">● Conectando...</div>
 <button class="secondary" id="logoutBtn">Sair</button>
@@ -145,51 +196,66 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 
 <section id="admin" class="tabview hidden">
 
-  <div class="card">
-    <h3>Painel Administrativo</h3>
-    <p style="color:var(--muted)">
-      Visão geral do desempenho do projeto social.
-    </p>
+<div class="card">
+<h3>Painel Administrativo</h3>
+<p style="color:var(--muted)">
+Visão geral do desempenho do projeto social.
+</p>
 
-    <div class="stats">
-      <div class="stat">
-        <b id="adminTotal">0</b>
-        <span>Total de alunos</span>
-      </div>
+<div class="stats">
+<div class="stat">
+<b id="adminTotal">0</b>
+<span>Total de alunos</span>
+</div>
+<div class="stat">
+<b id="adminCalls">0</b>
+<span>Chamadas realizadas</span>
+</div>
+<div class="stat">
+<b id="adminPresence">0%</b>
+<span>Frequência geral</span>
+</div>
+<div class="stat">
+<b id="adminAbsences">0</b>
+<span>Total de faltas</span>
+</div>
+</div>
+</div>
 
-      <div class="stat">
-        <b id="adminCalls">0</b>
-        <span>Chamadas realizadas</span>
-      </div>
+<div class="card" style="margin-top:14px">
+<h3>Resumo por turma</h3>
+<div id="classReport"></div>
+</div>
 
-      <div class="stat">
-        <b id="adminPresence">0%</b>
-        <span>Frequência geral</span>
-      </div>
+<div class="card" style="margin-top:14px">
+<h3>Frequência individual</h3>
+<div id="studentReport"></div>
+</div>
 
-      <div class="stat">
-        <b id="adminAbsences">0</b>
-        <span>Total de faltas</span>
-      </div>
-    </div>
-  </div>
+<div class="card" style="margin-top:14px">
+<h3>Alunos que precisam de atenção</h3>
+<div id="warningReport"></div>
+</div>
 
-  <div class="card" style="margin-top:14px">
-    <h3>Resumo por turma</h3>
-    <div id="classReport"></div>
-  </div>
+<div class="card" style="margin-top:14px">
+<h3>Gráfico mensal de frequência</h3>
+<p>Visualização da frequência dos alunos ao longo dos meses</p>
+<select id="monthlyClassFilter" onchange="render()" style="padding:8px;border-radius:8px;margin:8px 0">
+<option value="Todas">Todas as turmas</option>
+<option value="Turma 1">Turma 1</option>
+<option value="Turma 2">Turma 2</option>
+<option value="Turma 3">Turma 3</option>
+</select>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0">
+<label>Data inicial <input type="date" id="monthlyStart" onchange="render()"></label>
+<label>Data final <input type="date" id="monthlyEnd" onchange="render()"></label>
+</div>
+<div id="monthlyAttendance" style="min-height:220px;padding:15px"></div>
+</div>
 
-  <div class="card" style="margin-top:14px">
-    <h3>Frequência individual</h3>
-    <div id="studentReport"></div>
-  </div>
+</section>
 
-  <div class="card" style="margin-top:14px">
-    <h3>Alunos que precisam de atenção</h3>
-    <div id="warningReport"></div>
-  </div>
-
-    <div class="card" style="margin-top:14px"> <h3>Gráfico mensal de frequência</h3> <p>Visualização da frequência dos alunos ao longo dos meses</p> <select id="monthlyClassFilter" onchange="render()" style="padding:8px;border-radius:8px;margin:8px 0"><option value="Todas">Todas as turmas</option><option value="Turma 1">Turma 1</option><option value="Turma 2">Turma 2</option><option value="Turma 3">Turma 3</option></select><div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0"><label>Data inicial <input type="date" id="monthlyStart" onchange="render()"></label><label>Data final <input type="date" id="monthlyEnd" onchange="render()"></label></div><div id="monthlyAttendance" style="min-height:220px;padding:15px"></div> </div> </section><section id="attendance" class="tabview">
+<section id="attendance" class="tabview">
 <div class="card">
 <div class="toolbar">
 <h3 style="margin:0;flex:1">Chamada do treino</h3>
@@ -213,6 +279,7 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 
 <section id="students" class="tabview hidden">
 <div class="layout">
+
 <div class="card">
 <h3>Cadastrar aluno</h3>
 
@@ -238,19 +305,55 @@ input:focus,select:focus{outline:1px solid var(--gold)}
 <input id="studentPhone" placeholder="(00) 00000-0000">
 
 <div>
-  <label>Foto do aluno</label>
-  <input id="studentPhoto" type="file" accept="image/jpeg,image/png,image/webp">
+<label>Foto do aluno</label>
+<input id="studentPhoto" type="file" accept="image/jpeg,image/png,image/webp">
 </div>
-  <button class="goldbtn" id="addStudent">Adicionar aluno</button>
+
+<button class="goldbtn" id="addStudent">Adicionar aluno</button>
 </div>
 
 <div class="card">
 <h3>Alunos cadastrados</h3>
+<p class="note">Use as opções ao lado de cada aluno para editar dados, mudar de turma, trocar a foto ou remover o cadastro.</p>
 <div id="studentList"></div>
 </div>
+
 </div>
 </section>
 
+<div id="studentEditBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="studentEditTitle">
+<div class="student-modal">
+<h3 id="studentEditTitle">Editar aluno</h3>
+<p class="note">Altere os dados ou a turma. O histórico de chamadas já registrado será preservado.</p>
+<input type="hidden" id="editStudentId">
+
+<label for="editStudentName">Nome completo</label>
+<input id="editStudentName" maxlength="120" autocomplete="name">
+
+<div class="formrow">
+<div>
+<label for="editStudentClass">Turma</label>
+<select id="editStudentClass">
+<option>Turma 1</option>
+<option>Turma 2</option>
+<option>Turma 3</option>
+</select>
+</div>
+<div>
+<label for="editStudentLevel">Nível</label>
+<input id="editStudentLevel" maxlength="80">
+</div>
+</div>
+
+<label for="editStudentPhone">Telefone (opcional)</label>
+<input id="editStudentPhone" maxlength="40" inputmode="tel">
+
+<div class="modal-actions">
+<button type="button" class="secondary" id="cancelStudentEdit">Cancelar</button>
+<button type="button" class="primary" id="saveStudentEdit">Salvar alterações</button>
+</div>
+</div>
+</div>
 <section id="history" class="tabview hidden">
 <div class="card">
 <div class="toolbar">
@@ -316,7 +419,7 @@ async function persist(){
 backup();
 render();
 
-if(!currentUser)return;
+if(!currentUser)return false;
 
 status('● Salvando na nuvem...');
 
@@ -329,8 +432,10 @@ updated_at:new Date().toISOString()
 if(error){
 status('● Erro na nuvem');
 alert('Erro ao sincronizar: '+error.message);
+return false;
 }else{
 status('● Nuvem sincronizada');
+return true;
 }
 }
 
@@ -381,42 +486,46 @@ await loadStudentPhotos();
 render();
 status('● Nuvem sincronizada');
 }
+
 let studentPhotoUrls = new Map();
 
 async function loadStudentPhotos(){
-  studentPhotoUrls = new Map();
+studentPhotoUrls = new Map();
 
-  if(!currentUser || !Array.isArray(db.students)){
-    return;
-  }
-
-  const studentsWithPhotos = db.students.filter(s =>
-    s &&
-    s.id &&
-    typeof s.photoPath === 'string' &&
-    s.photoPath.startsWith(currentUser.id + '/')
-  );
-
-  await Promise.all(studentsWithPhotos.map(async s => {
-    const {data,error} = await sb.storage
-      .from('fotos-alunos')
-      .createSignedUrl(s.photoPath, 86400);
-
-    if(!error && data && data.signedUrl){
-      studentPhotoUrls.set(String(s.id), data.signedUrl);
-    }else if(error){
-      console.error('Erro ao carregar foto:', s.name, error.message);
-    }
-  }));
-}function studentAvatar(student, initials){
-  const photoUrl = studentPhotoUrls.get(String(student.id));
-
-  if(photoUrl){
-    return `<img src="${esc(photoUrl)}" alt="Foto de ${esc(student.name)}">`;
-  }
-
-  return esc(initials);
+if(!currentUser || !Array.isArray(db.students)){
+return;
 }
+
+const studentsWithPhotos = db.students.filter(s =>
+s &&
+s.id &&
+typeof s.photoPath === 'string' &&
+s.photoPath.startsWith(currentUser.id + '/')
+);
+
+await Promise.all(studentsWithPhotos.map(async s => {
+const {data,error} = await sb.storage
+.from('fotos-alunos')
+.createSignedUrl(s.photoPath, 86400);
+
+if(!error && data && data.signedUrl){
+studentPhotoUrls.set(String(s.id), data.signedUrl);
+}else if(error){
+console.error('Erro ao carregar foto:', s.name, error.message);
+}
+}));
+}
+
+function studentAvatar(student, initials){
+const photoUrl = studentPhotoUrls.get(String(student.id));
+
+if(photoUrl){
+return `<img src="${esc(photoUrl)}" alt="Foto de ${esc(student.name)}">`;
+}
+
+return esc(initials);
+}
+
 function render(){
 
 const students=db.students||[];
@@ -457,7 +566,9 @@ counts[r.studentId]=(counts[r.studentId]||0)+1;
 });
 
 $('alertCount').textContent=Object.values(counts).filter(n=>n>=2).length;
-  // PAINEL ADMINISTRATIVO
+
+// PAINEL ADMINISTRATIVO
+
 const adminCalls = db.calls || [];
 
 let adminPresent = 0;
@@ -468,44 +579,44 @@ let adminPending = 0;
 const adminStatsByStudent = {};
 
 students.forEach(s => {
-  adminStatsByStudent[s.id] = {
-    id: s.id,
-    name: s.name,
-    className: s.className,
-    present: 0,
-    absences: 0,
-    excused: 0,
-    pending: 0
-  };
+adminStatsByStudent[s.id] = {
+id: s.id,
+name: s.name,
+className: s.className,
+present: 0,
+absences: 0,
+excused: 0,
+pending: 0
+};
 });
 
 adminCalls.forEach(c => {
-  (c.records || []).forEach(r => {
-    const st = adminStatsByStudent[r.studentId];
-    if (!st) return;
+(c.records || []).forEach(r => {
+const st = adminStatsByStudent[r.studentId];
+if (!st) return;
 
-    if (r.status === 'Presente') {
-      st.present++;
-      adminPresent++;
-    } else if (r.status === 'Falta') {
-      st.absences++;
-      adminAbsences++;
-    } else if (r.status === 'Justificada') {
-      st.excused++;
-      adminExcused++;
-    } else {
-      st.pending++;
-      adminPending++;
-    }
-  });
+if (r.status === 'Presente') {
+st.present++;
+adminPresent++;
+} else if (r.status === 'Falta') {
+st.absences++;
+adminAbsences++;
+} else if (r.status === 'Justificada') {
+st.excused++;
+adminExcused++;
+} else {
+st.pending++;
+adminPending++;
+}
+});
 });
 
 const adminTotalConsidered =
-  adminPresent + adminAbsences;
+adminPresent + adminAbsences;
 
 const adminFrequency = adminTotalConsidered
-  ? Math.round(adminPresent / adminTotalConsidered * 100)
-  : 0;
+? Math.round(adminPresent / adminTotalConsidered * 100)
+: 0;
 
 $('adminTotal').textContent = students.length;
 $('adminCalls').textContent = adminCalls.length;
@@ -513,6 +624,7 @@ $('adminPresence').textContent = adminFrequency + '%';
 $('adminAbsences').textContent = adminAbsences;
 
 // RESUMO POR TURMA
+
 const adminClasses = ['Turma 1', 'Turma 2', 'Turma 3'];
 
 $('classReport').innerHTML = `
@@ -528,26 +640,27 @@ $('classReport').innerHTML = `
 </thead>
 <tbody>
 ${adminClasses.map(cl => {
-  const group = Object.values(adminStatsByStudent)
-    .filter(s => s.className === cl);
+const group = Object.values(adminStatsByStudent)
+.filter(s => s.className === cl);
 
-  const p = group.reduce((n,s) => n+s.present,0);
-  const f = group.reduce((n,s) => n+s.absences,0);
-  const total = p + f;
-  const freq = total ? Math.round(p/total*100) : 0;
+const p = group.reduce((n,s) => n+s.present,0);
+const f = group.reduce((n,s) => n+s.absences,0);
+const total = p + f;
+const freq = total ? Math.round(p/total*100) : 0;
 
-  return `<tr>
-    <td>${esc(cl)}</td>
-    <td>${group.length}</td>
-    <td>${p}</td>
-    <td>${f}</td>
-    <td>${freq}%</td>
-  </tr>`;
+return `<tr>
+<td>${esc(cl)}</td>
+<td>${group.length}</td>
+<td>${p}</td>
+<td>${f}</td>
+<td>${freq}%</td>
+</tr>`;
 }).join('')}
 </tbody>
 </table>`;
 
-// FREQUENCIA INDIVIDUAL
+// FREQUÊNCIA INDIVIDUAL
+
 $('studentReport').innerHTML = `
 <table class="table">
 <thead>
@@ -561,35 +674,88 @@ $('studentReport').innerHTML = `
 </thead>
 <tbody>
 ${Object.values(adminStatsByStudent).map(s => {
-  const total = s.present + s.absences;
-  const freq = total ? Math.round(s.present/total*100) : 0;
+const total = s.present + s.absences;
+const freq = total ? Math.round(s.present/total*100) : 0;
 
-  return `<tr>
-   <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar">${studentAvatar(s, s.name[0].toUpperCase())}</span>${esc(s.name)}</span></td>
-    <td>${esc(s.className)}</td>
-    <td>${s.present}</td>
-    <td>${s.absences}</td>
-    <td>${freq}%</td>
-  </tr>`;
+return `<tr>
+<td><span style="display:inline-flex;align-items:center;gap:8px"><span class="avatar">${studentAvatar(s, s.name[0].toUpperCase())}</span>${esc(s.name)}</span></td>
+<td>${esc(s.className)}</td>
+<td>${s.present}</td>
+<td>${s.absences}</td>
+<td>${freq}%</td>
+</tr>`;
 }).join('')}
 </tbody>
 </table>`;
 
-(function(){const el=$('monthlyAttendance');if(!el)return;const months={};const now=new Date();for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');months[k]={label:d.toLocaleDateString('pt-BR',{month:'short'}),p:0,f:0};}(db.calls||[]).forEach(c=>{const d=new Date(String(c.date||'').slice(0,10)+'T12:00:00');if(isNaN(d.getTime()))return;const start=$('monthlyStart')?.value;const end=$('monthlyEnd')?.value;if(start&&d<new Date(start+'T00:00:00'))return;if(end&&d>new Date(end+'T23:59:59'))return;const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(!months[k])return;const selectedClass=$('monthlyClassFilter')?.value||'Todas';(c.records||[]).forEach(r=>{const student=(db.students||[]).find(s=>s.id===r.studentId);if(selectedClass!=='Todas'&&(!student||student.className!==selectedClass))return;if(r.status==='Presente')months[k].p++;else if(r.status==='Falta')months[k].f++;});});el.innerHTML=Object.values(months).map(m=>{const t=m.p+m.f;const pct=t?Math.round(m.p/t*100):0;return '<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between"><b>'+m.label+'</b><b>'+(t?pct+'%':'Sem registros')+'</b></div><div style="background:#e5e7eb;height:14px;border-radius:8px;overflow:hidden"><div style="width:'+pct+'%;height:14px;background:#16a34a"></div></div><small>'+m.p+' presenças · '+m.f+' faltas</small></div>';}).join('');})(); // ALUNOS EM ALERTA
+(function(){
+const el=$('monthlyAttendance');
+if(!el)return;
+
+const months={};
+const now=new Date();
+
+for(let i=5;i>=0;i--){
+const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+months[k]={
+label:d.toLocaleDateString('pt-BR',{month:'short'}),
+p:0,
+f:0
+};
+}
+
+(db.calls||[]).forEach(c=>{
+const d=new Date(String(c.date||'').slice(0,10)+'T12:00:00');
+if(isNaN(d.getTime()))return;
+
+const start=$('monthlyStart')?.value;
+const end=$('monthlyEnd')?.value;
+
+if(start&&d<new Date(start+'T00:00:00'))return;
+if(end&&d>new Date(end+'T23:59:59'))return;
+
+const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+if(!months[k])return;
+
+const selectedClass=$('monthlyClassFilter')?.value||'Todas';
+
+(c.records||[]).forEach(r=>{
+const student=(db.students||[]).find(s=>s.id===r.studentId);
+
+if(selectedClass!=='Todas'&&(!student||student.className!==selectedClass))return;
+
+if(r.status==='Presente')months[k].p++;
+else if(r.status==='Falta')months[k].f++;
+});
+});
+
+el.innerHTML=Object.values(months).map(m=>{
+const t=m.p+m.f;
+const pct=t?Math.round(m.p/t*100):0;
+
+return '<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between"><b>'+m.label+'</b><b>'+(t?pct+'%':'Sem registros')+'</b></div><div style="background:#e5e7eb;height:14px;border-radius:8px;overflow:hidden"><div style="width:'+pct+'%;height:14px;background:#16a34a"></div></div><small>'+m.p+' presenças · '+m.f+' faltas</small></div>';
+}).join('');
+})();
+
+// ALUNOS EM ALERTA
+
 const warnings = Object.values(adminStatsByStudent)
-  .filter(s => (s.present + s.absences) > 0 && (s.present / (s.present + s.absences)) * 100 < 75);
+.filter(s => (s.present + s.absences) > 0 && (s.present / (s.present + s.absences)) * 100 < 75);
 
 $('warningReport').innerHTML = warnings.length
-  ? warnings.map(s => `
-    <div class="student">
-      <div class="avatar">${studentAvatar(s, s.name[0].toUpperCase())}</div>
-      <div class="meta">
-        <strong>${esc(s.name)}</strong>
-        <small>${esc(s.className)} · ${s.absences} faltas registradas · ${Math.round(s.present / (s.present + s.absences) * 100)}% de frequência</small>
-      </div>
-    </div>
-  `).join('')
-  : '<p class="empty">Nenhum aluno em alerta.</p>';
+? warnings.map(s => `
+<div class="student">
+<div class="avatar">${studentAvatar(s, s.name[0].toUpperCase())}</div>
+<div class="meta">
+<strong>${esc(s.name)}</strong>
+<small>${esc(s.className)} · ${s.absences} faltas registradas · ${Math.round(s.present / (s.present + s.absences) * 100)}% de frequência</small>
+</div>
+</div>
+`).join('')
+: '<p class="empty">Nenhum aluno em alerta.</p>';
+
+// LISTA DE ALUNOS
 
 $('studentList').innerHTML=students.length?students.map(s=>`
 <div class="student">
@@ -598,9 +764,15 @@ $('studentList').innerHTML=students.length?students.map(s=>`
 <strong>${esc(s.name)}</strong>
 <small>${esc(s.className)} · ${esc(s.level||'Nível não definido')}</small>
 </div>
-<button type="button" class="photoUploadBtn" data-photo-student="${esc(s.id)}">Adicionar foto</button>
+<div class="student-management">
+<button type="button" data-edit-student="${esc(s.id)}">Editar / turma</button>
+<button type="button" class="photoUploadBtn" data-photo-student="${esc(s.id)}">Alterar foto</button>
+<button type="button" class="danger" data-remove-student="${esc(s.id)}">Remover</button>
+</div>
 </div>
 `).join(''):'<p class="empty">Nenhum aluno cadastrado.</p>';
+
+// HISTÓRICO
 
 $('historyList').innerHTML=(db.calls||[]).length?`
 <table class="table">
@@ -615,13 +787,12 @@ ${db.calls.slice().reverse().flatMap(c=>
 <td>${esc(c.className)}</td>
 <td>${esc(r.name)}</td>
 <td><span class="pill ${esc(r.status)}">${esc(r.status)}</span></td>
-</tr>
 `)
 ).join('')}
 </tbody>
 </table>`:'<p class="empty">As chamadas salvas aparecerão aqui.</p>';
-}
 
+}
 // LOGIN
 $('loginBtn').addEventListener('click',async()=>{
 const email=$('authEmail').value.trim();
@@ -634,7 +805,9 @@ return;
 
 message('Entrando...');
 
-const {data,error}=await sb.auth.signInWithPassword({email,password});
+const {data,error}=await sb.auth.signInWithPassword({
+email,password
+});
 
 if(error){
 message(error.message);
@@ -656,7 +829,9 @@ return;
 
 message('Criando conta...');
 
-const {data,error}=await sb.auth.signUp({email,password});
+const {data,error}=await sb.auth.signUp({
+email,password
+});
 
 if(error){
 message(error.message);
@@ -674,12 +849,15 @@ message('Conta criada! Confirme seu e-mail e depois faça login.');
 $('logoutBtn').addEventListener('click',async()=>{
 await sb.auth.signOut();
 currentUser=null;
+studentPhotoUrls=new Map();
+
 $('mainApp').classList.add('hidden');
 $('loginPanel').classList.remove('hidden');
+
 status('● Desconectado');
 });
 
-// TROCAR TURMA
+// TROCAR TURMA DA CHAMADA
 $('classSelect').addEventListener('change',()=>{
 marks={};
 render();
@@ -711,7 +889,9 @@ name:s.name,
 status:marks[s.id]||'Pendente'
 }));
 
-const idx=db.calls.findIndex(c=>c.className===cls&&c.date===date);
+const idx=db.calls.findIndex(c=>
+c.className===cls&&c.date===date
+);
 
 const call={
 id:idx>=0?db.calls[idx].id:'call-'+Date.now(),
@@ -728,8 +908,9 @@ db.calls[idx]=call;
 db.calls.push(call);
 }
 
-await persist();
+if(await persist()){
 alert('Chamada salva!');
+}
 });
 
 // CADASTRAR ALUNO
@@ -741,68 +922,70 @@ alert('Informe o nome do aluno.');
 return;
 }
 
-const studentId = 's' + Date.now();
-let photoPath = null;
-const photoFile = $('#studentPhoto').files[0];
+const studentId='s'+Date.now();
+let photoPath=null;
+const photoFile=$('studentPhoto').files[0];
 
-if (photoFile) {
-  if (!photoFile.type.startsWith('image/')) {
-    alert('Selecione uma imagem válida.');
-    return;
-  }
-
-  if (photoFile.size > 5 * 1024 * 1024) {
-    alert('A foto deve ter no máximo 5 MB.');
-    return;
-  }
-
-  const ext = (photoFile.name.split('.').pop() || 'jpg')
-    .toLowerCase().replace(/[^a-z0-9]/g, '');
-
-  const { data: { user }, error: authError } = await sb.auth.getUser();
-
-if (authError || !user) {
-  alert('Sessão não encontrada. Faça login novamente.');
-  return;
+if(photoFile){
+if(!['image/jpeg','image/png','image/webp'].includes(photoFile.type)){
+alert('Selecione uma imagem JPG, PNG ou WEBP.');
+return;
 }
 
-photoPath = `${user.id}/${studentId}.${ext}`;
+if(photoFile.size>5*1024*1024){
+alert('A foto deve ter no máximo 5 MB.');
+return;
+}
 
-  const { error: uploadError } = await sb.storage
-    .from('fotos-alunos')
-    .upload(photoPath, photoFile, {
-      upsert: true,
-      contentType: photoFile.type
-    });
+const ext=photoFile.type==='image/png'?'png':
+photoFile.type==='image/webp'?'webp':'jpg';
 
-  if (uploadError) {
-    alert('Erro ao enviar foto: ' + uploadError.message);
-    return;
-  }
-}db.students.push({
-id: studentId,
+photoPath=`${currentUser.id}/${studentId}.${ext}`;
+
+const {error}=await sb.storage
+.from('fotos-alunos')
+.upload(photoPath,photoFile,{
+upsert:true,
+contentType:photoFile.type
+});
+
+if(error){
+alert('Erro ao enviar foto: '+error.message);
+return;
+}
+}
+
+db.students.push({
+id:studentId,
 name,
 className:$('studentClass').value,
 level:$('studentLevel').value.trim()||'Em avaliação',
-phone:$('studentPhone').value.trim(),photoPath
+phone:$('studentPhone').value.trim(),
+photoPath
 });
 
 $('studentName').value='';
 $('studentLevel').value='';
 $('studentPhone').value='';
+$('studentPhoto').value='';
 
-await persist();
-alert('Aluno cadastrado!');
+if(await persist()){
+await loadStudentPhotos();
+render();
+alert('Aluno cadastrado com sucesso!');
+}
 });
 
 // ABAS
 document.querySelectorAll('.tabs button').forEach(b=>{
 b.addEventListener('click',()=>{
 document.querySelectorAll('.tabs button').forEach(x=>
-x.classList.toggle('active',x===b));
+x.classList.toggle('active',x===b)
+);
 
 document.querySelectorAll('.tabview').forEach(x=>
-x.classList.toggle('hidden',x.id!==b.dataset.tab));
+x.classList.toggle('hidden',x.id!==b.dataset.tab)
+);
 });
 });
 
@@ -821,92 +1004,215 @@ row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')
 ).join('\n');
 
 const a=document.createElement('a');
-a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+a.href=URL.createObjectURL(
+new Blob([csv],{type:'text/csv;charset=utf-8'})
+);
 a.download='arena-belem-ftv-historico.csv';
 a.click();
 URL.revokeObjectURL(a.href);
 });
-$('studentList').addEventListener('click', async (event) => {
-  const button = event.target.closest('.photoUploadBtn');
-  if(!button) return;
 
-  const studentId = button.dataset.photoStudent;
-  const student = db.students.find(s => String(s.id) === String(studentId));
+// ABRIR E EDITAR ALUNO
+$('studentList').addEventListener('click',async(event)=>{
 
-  if(!student || !currentUser){
-    alert('Aluno ou sessão não encontrado.');
-    return;
-  }
+const editButton=event.target.closest('[data-edit-student]');
+const removeButton=event.target.closest('[data-remove-student]');
+const photoButton=event.target.closest('[data-photo-student]');
 
-  const ownerId = currentUser.id;
-  const picker = document.createElement('input');
+if(editButton){
 
-  picker.type = 'file';
-  picker.accept = 'image/jpeg,image/png,image/webp';
+const student=db.students.find(s=>
+String(s.id)===String(editButton.dataset.editStudent)
+);
 
-  picker.onchange = async () => {
-    const file = picker.files[0];
-    if(!file) return;
+if(!student)return;
 
-    if(!['image/jpeg','image/png','image/webp'].includes(file.type)){
-      alert('Selecione uma imagem JPG, PNG ou WEBP.');
-      return;
-    }
+$('editStudentId').value=student.id;
+$('editStudentName').value=student.name;
+$('editStudentClass').value=student.className;
+$('editStudentLevel').value=student.level||'';
+$('editStudentPhone').value=student.phone||'';
 
-    if(file.size > 5 * 1024 * 1024){
-      alert('A foto deve ter no máximo 5 MB.');
-      return;
-    }
+$('studentEditBackdrop').classList.remove('hidden');
+return;
+}
 
-    const ext = file.type === 'image/png' ? 'png'
-      : file.type === 'image/webp' ? 'webp' : 'jpg';
+// REMOVER ALUNO
+if(removeButton){
 
-    const photoPath = `${ownerId}/${student.id}.${ext}`;
-    const previousPhotoPath = student.photoPath;
+const student=db.students.find(s=>
+String(s.id)===String(removeButton.dataset.removeStudent)
+);
 
-    button.disabled = true;
+if(!student)return;
 
-    try {
-      const {error:uploadError} = await sb.storage
-        .from('fotos-alunos')
-        .upload(photoPath, file, {
-          upsert: true,
-          contentType: file.type
-        });
+const confirmed=confirm(
+'Tem certeza que deseja remover '+student.name+
+' da lista de alunos?\n\nO histórico de chamadas será preservado.'
+);
 
-      if(uploadError) throw uploadError;
+if(!confirmed)return;
 
-      student.photoPath = photoPath;
+const oldStudents=db.students.slice();
 
-      const {error:saveError} = await sb
-        .from('arena_dados')
-        .upsert({
-          user_id: ownerId,
-          dados: db,
-          updated_at: new Date().toISOString()
-        }, {onConflict:'user_id'});
+db.students=db.students.filter(s=>
+String(s.id)!==String(student.id)
+);
 
-      if(saveError) throw saveError;
+if(await persist()){
+alert('Aluno removido da lista com sucesso!');
+}else{
+db.students=oldStudents;
+backup();
+render();
+}
 
-      backup();
-      await loadStudentPhotos();
-      render();
+return;
+}
 
-      status('● Foto atualizada');
-      alert('Fotografia do aluno atualizada com sucesso!');
+// ALTERAR FOTO
+if(photoButton){
 
-    } catch(error) {
-      student.photoPath = previousPhotoPath;
-      alert('Erro ao atualizar fotografia: ' + error.message);
-    } finally {
-      button.disabled = false;
-    }
-  };
+const student=db.students.find(s=>
+String(s.id)===String(photoButton.dataset.photoStudent)
+);
 
-  picker.click();
+if(!student||!currentUser){
+alert('Aluno ou sessão não encontrado.');
+return;
+}
+
+const picker=document.createElement('input');
+picker.type='file';
+picker.accept='image/jpeg,image/png,image/webp';
+
+picker.onchange=async()=>{
+
+const file=picker.files[0];
+if(!file)return;
+
+if(!['image/jpeg','image/png','image/webp'].includes(file.type)){
+alert('Selecione uma imagem JPG, PNG ou WEBP.');
+return;
+}
+
+if(file.size>5*1024*1024){
+alert('A foto deve ter no máximo 5 MB.');
+return;
+}
+
+const ext=file.type==='image/png'?'png':
+file.type==='image/webp'?'webp':'jpg';
+
+const newPath=
+`${currentUser.id}/${student.id}-${Date.now()}.${ext}`;
+
+const oldPath=student.photoPath;
+
+photoButton.disabled=true;
+status('● Enviando nova fotografia...');
+
+try{
+
+const {error:uploadError}=await sb.storage
+.from('fotos-alunos')
+.upload(newPath,file,{
+upsert:false,
+contentType:file.type
 });
-// VERIFICAR SESSAO
+
+if(uploadError)throw uploadError;
+
+student.photoPath=newPath;
+
+const saved=await persist();
+
+if(!saved){
+student.photoPath=oldPath;
+await sb.storage.from('fotos-alunos').remove([newPath]);
+await loadStudentPhotos();
+render();
+throw new Error('Não foi possível salvar a alteração na nuvem.');
+}
+
+await loadStudentPhotos();
+render();
+
+status('● Foto atualizada');
+alert('Fotografia alterada com sucesso!');
+
+}catch(error){
+alert('Erro ao alterar fotografia: '+error.message);
+}finally{
+photoButton.disabled=false;
+}
+};
+
+picker.click();
+}
+
+});
+
+// CANCELAR EDIÇÃO
+$('cancelStudentEdit').addEventListener('click',()=>{
+$('studentEditBackdrop').classList.add('hidden');
+});
+
+// FECHAR MODAL CLICANDO FORA
+$('studentEditBackdrop').addEventListener('click',event=>{
+if(event.target.id==='studentEditBackdrop'){
+$('studentEditBackdrop').classList.add('hidden');
+}
+});
+
+// SALVAR EDIÇÃO
+$('saveStudentEdit').addEventListener('click',async()=>{
+
+const studentId=$('editStudentId').value;
+
+const student=db.students.find(s=>
+String(s.id)===String(studentId)
+);
+
+if(!student){
+alert('Aluno não encontrado.');
+return;
+}
+
+const name=$('editStudentName').value.trim();
+
+if(!name){
+alert('Informe o nome do aluno.');
+return;
+}
+
+const previous={...student};
+
+student.name=name;
+student.className=$('editStudentClass').value;
+student.level=$('editStudentLevel').value.trim()||'Em avaliação';
+student.phone=$('editStudentPhone').value.trim();
+
+$('saveStudentEdit').disabled=true;
+
+const saved=await persist();
+
+if(saved){
+$('studentEditBackdrop').classList.add('hidden');
+alert('Dados do aluno atualizados com sucesso!');
+}else{
+Object.assign(student,previous);
+backup();
+render();
+}
+
+$('saveStudentEdit').disabled=false;
+
+});
+
+// VERIFICAR SESSÃO
 (async()=>{
+
 const {data:{session},error}=await sb.auth.getSession();
 
 if(error){
@@ -919,9 +1225,9 @@ await loadCloud(session.user);
 }else{
 status('● Aguardando login');
 }
+
 })();
 
 </script>
 </body>
 </html>
-<!-- atualizacao Supabase -->    

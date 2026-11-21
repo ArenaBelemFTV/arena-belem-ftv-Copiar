@@ -528,7 +528,9 @@ return esc(initials);
 
 function render(){
 
-const students=db.students||[];
+const students=[...(db.students||[])].sort((a,b)=>
+String(a.name||'').localeCompare(String(b.name||''),'pt-BR',{sensitivity:'base'})
+);
 const cls=current();
 
 $('total').textContent=students.length;
